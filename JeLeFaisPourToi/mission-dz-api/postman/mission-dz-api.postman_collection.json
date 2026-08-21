@@ -1,0 +1,251 @@
+{
+  "info": {
+    "_postman_id": "b5f1a2b0-6e2f-4c9a-9a3f-2a7f2c8f4a11",
+    "name": "Mission DZ API — Auth",
+    "description": "Endpoints d'authentification de mission-dz-api (POST /api/auth/signup, /login, /refresh). Exécuter les requêtes dans l'ordre (via le Collection Runner, ou une par une) : chaque requête réutilise l'email et les jetons capturés par la précédente via des variables de collection.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080", "type": "string" },
+    { "key": "test_email", "value": "", "type": "string" },
+    { "key": "access_token", "value": "", "type": "string" },
+    { "key": "refresh_token", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Signup — nouveau compte",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const email = \"diaspora.\" + Date.now() + \"@example.com\";",
+              "pm.collectionVariables.set(\"test_email\", email);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Statut 201 Created\", () => pm.response.to.have.status(201));",
+              "",
+              "const body = pm.response.json();",
+              "pm.test(\"La réponse contient les deux jetons\", () => {",
+              "    pm.expect(body.accessToken).to.be.a(\"string\").and.not.empty;",
+              "    pm.expect(body.refreshToken).to.be.a(\"string\").and.not.empty;",
+              "});",
+              "",
+              "pm.collectionVariables.set(\"access_token\", body.accessToken);",
+              "pm.collectionVariables.set(\"refresh_token\", body.refreshToken);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Yasmine K.\",\n  \"email\": \"{{test_email}}\",\n  \"password\": \"motdepasse123\",\n  \"phone\": \"+33612345678\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/signup",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "signup"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Signup — email déjà utilisé (409 attendu)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Statut 409 Conflict\", () => pm.response.to.have.status(409));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Yasmine K.\",\n  \"email\": \"{{test_email}}\",\n  \"password\": \"motdepasse123\",\n  \"phone\": \"+33612345678\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/signup",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "signup"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Signup — email invalide (400 attendu)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Statut 400 Bad Request\", () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test\",\n  \"email\": \"pas-un-email\",\n  \"password\": \"motdepasse123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/signup",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "signup"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login — identifiants valides",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Statut 200 OK\", () => pm.response.to.have.status(200));",
+              "",
+              "const body = pm.response.json();",
+              "pm.test(\"La réponse contient les deux jetons\", () => {",
+              "    pm.expect(body.accessToken).to.be.a(\"string\").and.not.empty;",
+              "    pm.expect(body.refreshToken).to.be.a(\"string\").and.not.empty;",
+              "});",
+              "",
+              "pm.collectionVariables.set(\"access_token\", body.accessToken);",
+              "pm.collectionVariables.set(\"refresh_token\", body.refreshToken);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"motdepasse123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "login"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login — mauvais mot de passe (401 attendu)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Statut 401 Unauthorized\", () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"un-mauvais-mot-de-passe\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "login"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Refresh — nouveau access token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Statut 200 OK\", () => pm.response.to.have.status(200));",
+              "",
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set(\"access_token\", body.accessToken);",
+              "pm.collectionVariables.set(\"refresh_token\", body.refreshToken);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/refresh",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "refresh"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Refresh — avec un access token au lieu d'un refresh (401 attendu)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Statut 401 Unauthorized\", () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{access_token}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/refresh",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "refresh"]
+        }
+      },
+      "response": []
+    }
+  ]
+}

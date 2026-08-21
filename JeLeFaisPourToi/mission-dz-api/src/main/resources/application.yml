@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: mission-dz-api
+  profiles:
+    default: dev
+  autoconfigure:
+    exclude:
+      # Auth JWT stateless (voir dz.missiondz.api.security) : pas d'AuthenticationManager basé
+      # sur un UserDetailsService, donc pas besoin de l'utilisateur en mémoire généré par défaut.
+      - org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-ttl: 15m
+    refresh-token-ttl: 30d
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${DB_NAME:missiondz}
+    username: ${DB_USER:missiondz}
+    password: ${DB_PASSWORD:missiondz}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: jdbc:postgresql://postgres:5432/${DB_NAME:missiondz}
+    username: ${DB_USER:missiondz}
+    password: ${DB_PASSWORD:missiondz}

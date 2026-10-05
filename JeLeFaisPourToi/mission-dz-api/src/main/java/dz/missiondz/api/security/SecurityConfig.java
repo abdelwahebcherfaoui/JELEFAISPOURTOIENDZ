@@ -3,6 +3,7 @@ package dz.missiondz.api.security;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,9 +23,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * EnableMethodSecurity} est activé ici pour que ces annotations fonctionnent dès qu'elles
  * apparaîtront.
  *
- * <p>CORS n'est volontairement pas configuré ici : ce sera porté par {@code
- * dz.missiondz.api.config} (pas spécifique à la sécurité), à faire avant que le frontend web
- * puisse appeler l'API en cross-origin.
+ * <p>CORS s'appuie sur le {@code CorsConfigurationSource} défini dans {@code
+ * dz.missiondz.api.config.CorsConfig} (pas spécifique à la sécurité) — cette classe se contente
+ * de l'activer dans la chaîne.
  */
 @Configuration
 @EnableWebSecurity
@@ -36,6 +37,7 @@ public class SecurityConfig {
         "/api/auth/signup",
         "/api/auth/login",
         "/api/auth/refresh",
+        "/api/auth/logout",
         "/api/categories",
         "/actuator/health",
         "/actuator/info"
@@ -57,6 +59,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(
                         auth -> auth.requestMatchers(PUBLIC_ENDPOINTS).permitAll().anyRequest().authenticated())

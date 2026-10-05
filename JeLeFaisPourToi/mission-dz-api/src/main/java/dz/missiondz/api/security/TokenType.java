@@ -1,10 +1,11 @@
 package dz.missiondz.api.security;
 
 /**
- * Distingue un access token d'un refresh token dans les claims JWT, pour qu'un refresh token
- * présenté sur un endpoint protégé ne puisse pas servir à s'authentifier.
+ * Seul l'access token est un JWT (le refresh token est un jeton opaque stocké en base, voir
+ * {@link dz.missiondz.api.auth.service.RefreshTokenService}). Ce claim reste présent par sécurité
+ * pour qu'un jeton qui ne serait pas explicitement de type ACCESS ne puisse pas authentifier une
+ * requête.
  */
 public enum TokenType {
-    ACCESS,
-    REFRESH
+    ACCESS
 }

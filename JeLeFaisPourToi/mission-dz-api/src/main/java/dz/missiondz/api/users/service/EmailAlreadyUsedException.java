@@ -1,4 +1,4 @@
-package dz.missiondz.api.auth.service;
+package dz.missiondz.api.users.service;
 
 import dz.missiondz.api.common.ApiException;
 import org.springframework.http.HttpStatus;

@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(netstat -ano)",
+      "Bash(node verify-guards.mjs)",
+      "Bash(taskkill //PID 28384 //F)",
+      "Bash(node -e ' *)",
+      "Bash(taskkill //PID 27248 //F)",
+      "Bash(taskkill //PID 7696 //F)",
+      "Bash(taskkill //PID 15512 //F)",
+      "Bash(taskkill //PID 43328 //F)",
+      "Bash(node verify-booking-flow.mjs)",
+      "Bash(taskkill //PID 7384 //F)",
+      "Bash(nohup npm run dev)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5173/)",
+      "Bash(node verify-cards-scroll.mjs)",
+      "Bash(node verify-cards-screenshot.mjs)",
+      "Bash(taskkill //PID 36724 //F)",
+      "Bash(taskkill //PID 37844 //F)",
+      "Bash(node verify-description-field.mjs)",
+      "Bash(taskkill //PID 36560 //F)",
+      "Bash(node verify-date-field.mjs)",
+      "Bash(taskkill //PID 7532 //F)",
+      "Bash(node verify-summary-page.mjs)",
+      "Bash(taskkill //PID 19148 //F)",
+      "Bash(taskkill //PID 37860 //F)",
+      "Bash(taskkill //PID 41936 //F)",
+      "Bash(node verify-full-width.mjs)",
+      "Bash(taskkill //PID 42212 //F)",
+      "Bash(taskkill //PID 35100 //F)",
+      "Bash(node verify-payment-step.mjs)",
+      "Bash(taskkill //PID 37444 //F)",
+      "Bash(taskkill //PID 43316 //F)",
+      "Bash(taskkill //PID 36904 //F)",
+      "Bash(taskkill //PID 41892 //F)",
+      "Bash(node verify-wecasa-breakpoint.mjs)",
+      "Bash(taskkill //PID 39616 //F)",
+      "Bash(taskkill //PID 23360 //F)",
+      "Bash(taskkill //PID 36508 //F)",
+      "Bash(taskkill //PID 11784 //F)"
+    ]
+  }
+}

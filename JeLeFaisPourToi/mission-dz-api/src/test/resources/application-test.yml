@@ -1,4 +1,7 @@
-# Profil de test : H2 en mémoire, pour que `mvn test` ne dépende d'aucune base externe.
+# Profil "test" : H2 en mémoire, pour que `mvn test` ne dépende d'aucune base externe.
+# Activé explicitement par @IntegrationTest (@ActiveProfiles("test")) — jamais par coïncidence
+# de nom de fichier, pour ne pas risquer de fuiter sur une exécution réelle de l'application
+# selon l'outillage utilisé pour la lancer (voir IntegrationTest.java).
 # À revoir à l'étape CI/CD (Testcontainers + Postgres réel) une fois Docker disponible.
 spring:
   autoconfigure:

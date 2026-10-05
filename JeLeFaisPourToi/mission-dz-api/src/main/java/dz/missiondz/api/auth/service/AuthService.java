@@ -3,22 +3,21 @@ package dz.missiondz.api.auth.service;
 import dz.missiondz.api.auth.dto.AuthResponse;
 import dz.missiondz.api.auth.dto.LoginRequest;
 import dz.missiondz.api.auth.dto.SignupRequest;
+import dz.missiondz.api.auth.entity.RefreshToken;
 import dz.missiondz.api.security.JwtService;
-import dz.missiondz.api.security.TokenType;
 import dz.missiondz.api.users.dao.UserRepository;
 import dz.missiondz.api.users.entity.Role;
 import dz.missiondz.api.users.entity.User;
-import io.jsonwebtoken.JwtException;
+import dz.missiondz.api.users.service.EmailAlreadyUsedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Inscription, connexion et rafraîchissement de jeton. Le refresh token reste, pour l'instant,
- * stateless comme l'access token (voir {@link dz.missiondz.api.security.JwtService}) : la
- * conception technique prévoit qu'il soit "stocké côté serveur et révocable", ce qui exigerait
- * une entité dédiée (table de refresh tokens, invalidée à la déconnexion) — non construite ici
- * faute d'un besoin de déconnexion/révocation pour l'instant. À ajouter quand ce besoin apparaît.
+ * Inscription, connexion et rafraîchissement de jeton. L'access token reste stateless (JWT, voir
+ * {@link dz.missiondz.api.security.JwtService}) ; le refresh token, lui, est stocké en base et
+ * tourné à chaque utilisation (voir {@link RefreshTokenService}), ce qui le rend révocable et à
+ * usage unique.
  */
 @Service
 public class AuthService {
@@ -26,11 +25,17 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional
@@ -51,6 +56,7 @@ public class AuthService {
         return issueTokens(user);
     }
 
+    @Transactional
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email()).orElseThrow(InvalidCredentialsException::new);
 
@@ -61,27 +67,22 @@ public class AuthService {
         return issueTokens(user);
     }
 
+    @Transactional
     public AuthResponse refresh(String refreshToken) {
-        JwtService.DecodedToken decoded;
-        try {
-            decoded = jwtService.parse(refreshToken);
-        } catch (JwtException | IllegalArgumentException e) {
-            throw new InvalidRefreshTokenException();
-        }
+        RefreshToken rotated = refreshTokenService.rotate(refreshToken);
+        User user = rotated.getUser();
+        String accessToken = jwtService.generateAccessToken(user.getId(), user.getRole().name(), user.getName());
+        return new AuthResponse(accessToken, rotated.getToken());
+    }
 
-        if (decoded.tokenType() != TokenType.REFRESH) {
-            throw new InvalidRefreshTokenException();
-        }
-
-        User user = userRepository.findById(decoded.userId()).orElseThrow(InvalidRefreshTokenException::new);
-
-        return issueTokens(user);
+    @Transactional
+    public void logout(String refreshToken) {
+        refreshTokenService.revokeByToken(refreshToken);
     }
 
     private AuthResponse issueTokens(User user) {
-        String role = user.getRole().name();
-        String accessToken = jwtService.generateAccessToken(user.getId(), role);
-        String refreshToken = jwtService.generateRefreshToken(user.getId(), role);
-        return new AuthResponse(accessToken, refreshToken);
+        String accessToken = jwtService.generateAccessToken(user.getId(), user.getRole().name(), user.getName());
+        RefreshToken refreshToken = refreshTokenService.create(user);
+        return new AuthResponse(accessToken, refreshToken.getToken());
     }
 }

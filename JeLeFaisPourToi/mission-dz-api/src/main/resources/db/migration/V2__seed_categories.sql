@@ -1,0 +1,16 @@
+INSERT INTO service_categories (id, slug, name, description, icon, phase, active) VALUES
+    (gen_random_uuid(), 'verification-inspection', 'Vérification / Inspection',
+        'Vérifier un logement, un véhicule, l''avancement d''un chantier ou constater une situation sur place, avec photos et vidéos à l''appui.',
+        '🔍', 'MVP', true),
+    (gen_random_uuid(), 'immobilier-maison', 'Immobilier & Maison',
+        'Travaux, entretien courant, préparation de la maison avant les vacances, état des lieux.',
+        '🏠', 'PHASE_1', false),
+    (gen_random_uuid(), 'vehicule', 'Véhicule',
+        'Accompagnement chez un mécanicien, entretien, préparation du véhicule avant l''arrivée du propriétaire.',
+        '🚗', 'PHASE_2', false),
+    (gen_random_uuid(), 'assistance-famille', 'Assistance famille',
+        'Livraison, courses, installation d''équipement, accompagnement logistique ponctuel non médical.',
+        '👴', 'PHASE_3', false),
+    (gen_random_uuid(), 'documents-demarches', 'Documents / Démarches',
+        'Récupération de documents transmissibles à un tiers, dépôt de dossier, mise en relation avec un professionnel habilité.',
+        '📄', 'PHASE_4', false);

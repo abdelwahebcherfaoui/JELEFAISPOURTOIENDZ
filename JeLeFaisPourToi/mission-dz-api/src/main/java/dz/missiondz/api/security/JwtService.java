@@ -4,7 +4,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
@@ -12,14 +11,16 @@ import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
 /**
- * Émission et lecture des JWT. Ne va jamais chercher l'utilisateur en base : le rôle et
- * l'identifiant voyagent dans les claims du jeton (authentification stateless).
+ * Émission et lecture de l'access token (JWT). Ne va jamais chercher l'utilisateur en base : le
+ * rôle et l'identifiant voyagent dans les claims du jeton (authentification stateless). Le refresh
+ * token, lui, n'est pas géré ici : voir {@link dz.missiondz.api.auth.service.RefreshTokenService}.
  */
 @Service
 public class JwtService {
 
     private static final String CLAIM_ROLE = "role";
     private static final String CLAIM_TOKEN_TYPE = "tokenType";
+    private static final String CLAIM_NAME = "name";
 
     private final JwtProperties properties;
     private final SecretKey signingKey;
@@ -30,23 +31,25 @@ public class JwtService {
     }
 
     public String generateAccessToken(UUID userId, String role) {
-        return generateToken(userId, role, TokenType.ACCESS, properties.accessTokenTtl());
+        return generateAccessToken(userId, role, null);
     }
 
-    public String generateRefreshToken(UUID userId, String role) {
-        return generateToken(userId, role, TokenType.REFRESH, properties.refreshTokenTtl());
-    }
-
-    private String generateToken(UUID userId, String role, TokenType tokenType, Duration ttl) {
+    /**
+     * Le nom voyage dans le claim {@value #CLAIM_NAME} — ça évite un aller-retour vers
+     * {@code GET /api/users/me} juste pour afficher "Bonjour {nom}" côté front.
+     */
+    public String generateAccessToken(UUID userId, String role, String name) {
         Instant now = Instant.now();
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(userId.toString())
                 .claim(CLAIM_ROLE, role)
-                .claim(CLAIM_TOKEN_TYPE, tokenType.name())
+                .claim(CLAIM_TOKEN_TYPE, TokenType.ACCESS.name())
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plus(ttl)))
-                .signWith(signingKey)
-                .compact();
+                .expiration(Date.from(now.plus(properties.accessTokenTtl())));
+        if (name != null) {
+            builder.claim(CLAIM_NAME, name);
+        }
+        return builder.signWith(signingKey).compact();
     }
 
     /**

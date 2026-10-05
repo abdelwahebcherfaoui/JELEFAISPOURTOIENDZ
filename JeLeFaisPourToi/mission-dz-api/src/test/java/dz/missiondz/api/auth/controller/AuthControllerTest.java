@@ -1,18 +1,19 @@
 package dz.missiondz.api.auth.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import dz.missiondz.api.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
+@IntegrationTest
 @AutoConfigureMockMvc
 class AuthControllerTest {
 
@@ -92,6 +93,69 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"refreshToken\":\"" + accessToken + "\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void refreshRotatesTheTokenSoTheOldOneCanOnlyBeUsedOnce() throws Exception {
+        String email = "rotation." + System.nanoTime() + "@example.com";
+
+        String signupResponse = mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(signupBody(email, "motdepasse123")))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String originalRefreshToken = signupResponse.split("\"refreshToken\":\"")[1].split("\"")[0];
+
+        String refreshResponse = mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + originalRefreshToken + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken", notNullValue()))
+                .andExpect(jsonPath("$.refreshToken", notNullValue()))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String newRefreshToken = refreshResponse.split("\"refreshToken\":\"")[1].split("\"")[0];
+
+        assertThat(newRefreshToken).isNotEqualTo(originalRefreshToken);
+
+        // Le jeton d'origine a été consommé par la rotation : le rejouer doit maintenant échouer.
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + originalRefreshToken + "\"}"))
+                .andExpect(status().isUnauthorized());
+
+        // Le nouveau jeton, lui, fonctionne toujours.
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + newRefreshToken + "\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void logoutRevokesTheRefreshToken() throws Exception {
+        String email = "logout." + System.nanoTime() + "@example.com";
+
+        String signupResponse = mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(signupBody(email, "motdepasse123")))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String refreshToken = signupResponse.split("\"refreshToken\":\"")[1].split("\"")[0];
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + refreshToken + "\"}"))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + refreshToken + "\"}"))
                 .andExpect(status().isUnauthorized());
     }
 

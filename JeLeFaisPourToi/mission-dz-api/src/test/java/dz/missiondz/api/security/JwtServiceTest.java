@@ -28,16 +28,6 @@ class JwtServiceTest {
     }
 
     @Test
-    void generatesAndParsesARefreshToken() {
-        UUID userId = UUID.randomUUID();
-
-        String token = jwtService.generateRefreshToken(userId, "ADMIN");
-        JwtService.DecodedToken decoded = jwtService.parse(token);
-
-        assertThat(decoded.tokenType()).isEqualTo(TokenType.REFRESH);
-    }
-
-    @Test
     void rejectsATokenSignedWithADifferentSecret() {
         var otherJwtService = new JwtService(
                 new JwtProperties(
